@@ -40,6 +40,24 @@ wss.on('connection', (ws) => {
         console.log(`Send message to ${targetId}`)
       }
 
+      if(data.type == 'typing'){
+        const targetId = data.target
+        const client = clients.get(targetId)
+
+        client.send(JSON.stringify({ type: 'typing' }));
+
+        console.log(`Send typing state to ${targetId}`)
+      }
+
+      if(data.type == 'typing_end'){
+        const targetId = data.target
+        const client = clients.get(targetId)
+
+        client.send(JSON.stringify({ type: 'typing_end' }));
+
+        console.log(`Send typing_end state to ${targetId}`)
+      }
+
     } catch (err) {
       console.error('Invalid message format', err);
     }

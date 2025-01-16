@@ -30,6 +30,8 @@ const Home = () => {
 
   const [messages, setMessages] =  useState<Message[]>([])
 
+  const [isTyping, setIsTyping] = useState<boolean>(false)
+
   const socket = new WebSocket('ws://localhost:3002');
   socket.onopen = () => {
     console.log('Terhubung ke WebSocket server');
@@ -39,6 +41,12 @@ const Home = () => {
     if(data.type == 'receive'){
       const m = data.message
       setMessages((prev) => [...prev, {from:target?.id || '', message:m}] )
+    }
+    if(data.type == 'typing'){
+      setIsTyping(true)
+    }
+    if(data.type == 'typing_end'){
+      setIsTyping(false)
     }
   };
   socket.onerror = (error) => {
@@ -52,6 +60,24 @@ const Home = () => {
     setMsg(e.target.value)
   }
 
+  const handleKeyup = () => {
+    socket.send(
+      JSON.stringify({
+        type:'typing',
+        target:target?.id
+      })
+    )
+  }
+
+  const handleBlur = () => {
+    socket.send(
+      JSON.stringify({
+        type:'typing_end',
+        target:target?.id
+      })
+    )
+  }
+
   const onSubmit = () => {
     socket.send(
       JSON.stringify({
@@ -60,7 +86,6 @@ const Home = () => {
         target:target?.id
       })
     )
-
     setMessages((prev) => [...prev, {from:'me', message:msg}] )
     setMsg('')
   }
@@ -86,6 +111,13 @@ const Home = () => {
                   </div>
                 )
               })}
+              {isTyping && (
+                <div>
+                  <small>
+                    <i>sedang mengetik pesan...</i>
+                  </small>
+                </div>
+              )}
             </div>
             <div className="flex gap-x-2 mb-2">
               <input 
@@ -93,6 +125,8 @@ const Home = () => {
                 className="border px-3 py-1 rounded w-full"
                 value={msg}
                 onChange={handleChange} 
+                onKeyUp={handleKeyup}
+                onBlur={handleBlur}
               />
               <button
                 className="border px-3 rounded"
